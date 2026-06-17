@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clanker Clicker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --text-color: #f8fafc;
+            --accent-color: #38bdf8;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            user-select: none; /* Prevents text highlighting while spam-clicking */
+            -webkit-user-select: none;
+            overflow: hidden;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: 0.1rem;
+            margin: 0 0 0.5rem 0;
+            text-transform: uppercase;
+            background: linear-gradient(to right, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .counter {
+            font-size: 4rem;
+            font-weight: 800;
+            margin: 0;
+            color: var(--text-color);
+            transition: transform 0.05s ease;
+            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        /* The container holding the Clanker avatar */
+        .click-zone {
+            position: relative;
+            cursor: pointer;
+            outline: none;
+            -webkit-tap-highlight-color: transparent; /* Removes blue box flash on mobile */
+        }
+
+        .avatar {
+            width: 320px;
+            height: 320px;
+            object-fit: contain;
+            transition: transform 0.05s ease;
+            filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.5));
+        }
+
+        /* Pop animation classes triggered by JavaScript */
+        .pop-active {
+            transform: scale(0.92);
+        }
+
+        .counter-pop {
+            transform: scale(1.1);
+            color: var(--accent-color);
+        }
+
+        @media (max-width: 480px) {
+            h1 { font-size: 2rem; }
+            .counter { font-size: 3rem; }
+            .avatar { width: 260px; height: 260px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Clanker Clicker</h1>
+        <div id="counter" class="counter">0</div>
+    </div>
+
+    <div class="click-zone" id="clickZone">
+        <img id="avatar" class="avatar" src="clanker-closed.png" alt="Clanker">
+    </div>
+
+    <audio id="clankerSound" src="clanker.mp3" preload="auto"></audio>
+
+    <script>
+        // --- CONSTANTS FOR YOUR ASSETS ---
+        // Change these strings to your actual image URLs or local filenames
+        const IMG_CLOSED = 'clanker-closed.png';
+        const IMG_OPEN = 'clanker-open.png';
+
+        // --- DOM ELEMENTS ---
+        const clickZone = document.getElementById('clickZone');
+        const avatar = document.getElementById('avatar');
+        const counterDisplay = document.getElementById('counter');
+        const clankerSound = document.getElementById('clankerSound');
+
+        let score = 0;
+
+        // --- POP CAT CLICK FUNCTIONS ---
+        function pressDown(e) {
+            if (e) e.preventDefault(); // Prevents double-triggering on mobile hybrid devices
+
+            // 1. Switch avatar to wide-mouthed version
+            avatar.src = IMG_OPEN;
+
+            // 2. Increment score and update display
+            score++;
+            counterDisplay.textContent = score;
+
+            // 3. Apply swift CSS scale crunch visuals
+            avatar.classList.add('pop-active');
+            counterDisplay.classList.add('counter-pop');
+
+            // 4. Reset and play audio instantly (lag-free spam mode)
+            clankerSound.currentTime = 0; 
+            clankerSound.play().catch(err => {
+                console.log("Audio couldn't play yet. Interact with the page first!");
+            });
+        }
+
+        function releaseUp() {
+            // 1. Switch back to normal avatar
+            avatar.src = IMG_CLOSED;
+
+            // 2. Clear out scale animations to reset physics
+            avatar.classList.remove('pop-active');
+            counterDisplay.classList.remove('counter-pop');
+        }
+
+        // --- EVENT LISTENERS (Desktop + Mobile Support) ---
+        // Mouse Listeners
+        clickZone.addEventListener('mousedown', pressDown);
+        window.addEventListener('mouseup', releaseUp);
+
+        // Touch Listeners (Mobile optimized)
+        clickZone.addEventListener('touchstart', pressDown, { passive: false });
+        window.addEventListener('touchend', releaseUp);
+    </script>
+</body>
+</html>
