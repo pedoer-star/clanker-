@@ -3,16 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clanker Clicker</title>
+    <title>Clanker Clicker Extreme</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;800&display=swap" rel="stylesheet">
     
     <style>
         :root {
-            --bg-color: #0f172a;
+            --bg-color: #0b0f19;
             --text-color: #f8fafc;
             --accent-color: #38bdf8;
+            --scream-color: #f43f5e;
         }
 
         body {
@@ -26,34 +27,43 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            user-select: none; /* Prevents text highlighting while spam-clicking */
+            user-select: none;
             -webkit-user-select: none;
             overflow: hidden;
+            background-image: radial-gradient(circle at center, #1e293b 0%, #0b0f19 70%);
         }
 
         .header {
             text-align: center;
-            margin-bottom: 2rem;
+            margin-bottom: 1rem;
+            z-index: 10;
         }
 
         h1 {
             font-size: 2.5rem;
             font-weight: 800;
             letter-spacing: 0.1rem;
-            margin: 0 0 0.5rem 0;
+            margin: 0 0 0.2rem 0;
             text-transform: uppercase;
-            background: linear-gradient(to right, #38bdf8, #818cf8);
+            background: linear-gradient(to right, #38bdf8, #ec4899);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
+        .counter-container {
+            height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
         .counter {
-            font-size: 4rem;
+            font-size: 4.5rem;
             font-weight: 800;
             margin: 0;
             color: var(--text-color);
-            transition: transform 0.05s ease;
-            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: transform 0.08s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
         }
 
         /* The container holding the Clanker avatar */
@@ -61,31 +71,67 @@
             position: relative;
             cursor: pointer;
             outline: none;
-            -webkit-tap-highlight-color: transparent; /* Removes blue box flash on mobile */
+            -webkit-tap-highlight-color: transparent;
+            width: 400px;
+            height: 400px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .avatar {
-            width: 320px;
-            height: 320px;
+            width: 280px;
+            height: 280px;
             object-fit: contain;
-            transition: transform 0.05s ease;
-            filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.5));
+            /* Smooth jump configuration back to normal */
+            transition: transform 0.15s cubic-bezier(0.25, 1, 0.5, 1);
+            filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.6));
         }
 
-        /* Pop animation classes triggered by JavaScript */
-        .pop-active {
-            transform: scale(0.92);
+        /* --- THE ADVANCED JUMP & SCREAM VISUALS --- */
+        
+        /* Violent scale jump forward when clicked down */
+        .avatar.jump-active {
+            transform: scale(1.4); /* Makes Clanker violently jump out at the screen */
+            filter: drop-shadow(0 25px 30px rgba(244, 63, 94, 0.5)); /* Adds a red scream glow */
         }
 
-        .counter-pop {
-            transform: scale(1.1);
-            color: var(--accent-color);
+        /* Number bounce/shake upwards */
+        .counter.counter-jump {
+            transform: translateY(-20px) scale(1.2); /* Number jumps upward and gets bigger */
+            color: var(--scream-color);
+        }
+
+        /* Floating style point effect elements spawned by click */
+        .scream-text {
+            position: absolute;
+            font-weight: 800;
+            font-size: 2rem;
+            color: var(--scream-color);
+            text-shadow: 0 0 10px rgba(244, 63, 94, 0.8);
+            pointer-events: none;
+            animation: floatUpAndOut 0.4s ease-out forwards;
+            z-index: 20;
+            text-transform: uppercase;
+        }
+
+        @keyframes floatUpAndOut {
+            0% {
+                opacity: 1;
+                transform: translate(0, 0) scale(0.8) rotate(0deg);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(var(--x-move), var(--y-move)) scale(1.5) rotate(var(--rot));
+            }
         }
 
         @media (max-width: 480px) {
             h1 { font-size: 2rem; }
-            .counter { font-size: 3rem; }
-            .avatar { width: 260px; height: 260px; }
+            .counter { font-size: 3.5rem; }
+            .click-zone { width: 300px; height: 300px; }
+            .avatar { width: 220px; height: 220px; }
+            .avatar.jump-active { transform: scale(1.30); }
         }
     </style>
 </head>
@@ -93,7 +139,9 @@
 
     <div class="header">
         <h1>Clanker Clicker</h1>
-        <div id="counter" class="counter">0</div>
+        <div class="counter-container">
+            <div id="counter" class="counter">0</div>
+        </div>
     </div>
 
     <div class="click-zone" id="clickZone">
@@ -103,12 +151,9 @@
     <audio id="clankerSound" src="clanker.mp3" preload="auto"></audio>
 
     <script>
-        // --- CONSTANTS FOR YOUR ASSETS ---
-        // Change these strings to your actual image URLs or local filenames
         const IMG_CLOSED = 'clanker-closed.png';
         const IMG_OPEN = 'clanker-open.png';
 
-        // --- DOM ELEMENTS ---
         const clickZone = document.getElementById('clickZone');
         const avatar = document.getElementById('avatar');
         const counterDisplay = document.getElementById('counter');
@@ -116,43 +161,62 @@
 
         let score = 0;
 
-        // --- POP CAT CLICK FUNCTIONS ---
         function pressDown(e) {
-            if (e) e.preventDefault(); // Prevents double-triggering on mobile hybrid devices
+            if (e) e.preventDefault(); 
 
-            // 1. Switch avatar to wide-mouthed version
+            // 1. Switch avatar to open mouth
             avatar.src = IMG_OPEN;
 
             // 2. Increment score and update display
             score++;
             counterDisplay.textContent = score;
 
-            // 3. Apply swift CSS scale crunch visuals
-            avatar.classList.add('pop-active');
-            counterDisplay.classList.add('counter-pop');
+            // 3. Apply the violent "JUMP OUT" and "NUMBER UP" physics layout
+            avatar.classList.add('jump-active');
+            counterDisplay.classList.add('counter-pop', 'counter-jump');
 
-            // 4. Reset and play audio instantly (lag-free spam mode)
+            // 4. Reset and scream audio immediately
             clankerSound.currentTime = 0; 
-            clankerSound.play().catch(err => {
-                console.log("Audio couldn't play yet. Interact with the page first!");
-            });
+            clankerSound.play().catch(err => console.log("Audio waiting for user interaction..."));
+
+            // 5. Generate a flying "CLANKER!" scream word object on screen
+            createScreamText();
         }
 
         function releaseUp() {
-            // 1. Switch back to normal avatar
+            // Restore default sizes smoothly
             avatar.src = IMG_CLOSED;
-
-            // 2. Clear out scale animations to reset physics
-            avatar.classList.remove('pop-active');
-            counterDisplay.classList.remove('counter-pop');
+            avatar.classList.remove('jump-active');
+            counterDisplay.classList.remove('counter-pop', 'counter-jump');
         }
 
-        // --- EVENT LISTENERS (Desktop + Mobile Support) ---
-        // Mouse Listeners
+        // Dynamically creates popping visual text objects
+        function createScreamText() {
+            const scream = document.createElement('div');
+            scream.className = 'scream-text';
+            scream.innerText = 'CLANKER!';
+            
+            // Randomize trajectory direction values for the text blowout explosion
+            const randomX = (Math.random() * 200 - 100) + 'px';
+            const randomY = (Math.random() * -150 - 100) + 'px';
+            const randomRot = (Math.random() * 40 - 20) + 'deg';
+            
+            scream.style.setProperty('--x-move', randomX);
+            scream.style.setProperty('--y-move', randomY);
+            scream.style.setProperty('--rot', randomRot);
+
+            clickZone.appendChild(scream);
+
+            // Clean element out of RAM after animation completes
+            setTimeout(() => {
+                scream.remove();
+            }, 400);
+        }
+
+        // --- EVENT LISTENERS ---
         clickZone.addEventListener('mousedown', pressDown);
         window.addEventListener('mouseup', releaseUp);
 
-        // Touch Listeners (Mobile optimized)
         clickZone.addEventListener('touchstart', pressDown, { passive: false });
         window.addEventListener('touchend', releaseUp);
     </script>
